@@ -104,3 +104,80 @@ func TestGetDropsEntitlements(t *testing.T) {
 		t.Error("expected error does match return error")
 	}
 }
+
+func TestUpdateDropsEntitlements(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		statusCode        int
+		code              string
+		scopes            []string
+		options           *Options
+		entitlementIds    []string
+		entitlementStatus EntitlementCodeStatus
+		respBody          string
+		expectedErrMsg    string
+	}{
+		{
+			http.StatusOK,
+			"valid-auth-code",
+			[]string{"user:edit"},
+			&Options{
+				ClientID:     "my-client-id",
+				ClientSecret: "my-client-secret",
+				RedirectURI:  "https://example.com/auth/callback",
+			},
+			[]string{"fb78259e-fb81-4d1b-8333-34a06ffc24c0", "862750a5-265e-4ab6-9f0a-c64df3d54dd0", "d8879baa-3966-4d10-8856-15fdd62cce02", "9a290126-7e3b-4f66-a9ae-551537893b65"},
+			FULFILLED,
+			`{"data":[{"status":"SUCCESS","ids":["fb78259e-fb81-4d1b-8333-34a06ffc24c0","862750a5-265e-4ab6-9f0a-c64df3d54dd0"]},{"status":"UNAUTHORIZED","ids":["d8879baa-3966-4d10-8856-15fdd62cce02"]},{"status":"UPDATE_FAILED","ids":["9a290126-7e3b-4f66-a9ae-551537893b65"]}]}`,
+			"",
+		},
+		{
+			http.StatusBadRequest,
+			"invalid-auth-code",
+			[]string{"user:edit"},
+			&Options{
+				ClientID:     "my-client-id",
+				ClientSecret: "my-client-secret",
+				RedirectURI:  "https://example.com/auth/callback",
+			},
+			[]string{"fb78259e-fb81-4d1b-8333-34a06ffc24c0", "862750a5-265e-4ab6-9f0a-c64df3d54dd0", "d8879baa-3966-4d10-8856-15fdd62cce02", "9a290126-7e3b-4f66-a9ae-551537893b65"},
+			CLAIMED,
+			`{"error":"Bad Request","status":400,"message":"OAuth client is missing an organization association"}`,
+			`OAuth client is missing an organization association`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		c := newMockClient(testCase.options, newMockHandler(testCase.statusCode, testCase.respBody, nil))
+
+		_, err := c.RequestUserAccessToken(testCase.code)
+		if err != nil {
+			t.Error(err)
+		}
+
+		// see authentication_test.go for auth tests ...
+
+		resp, err := c.UpdateDropsEntitlements(&UpdateDropEntitlementsParams{EntitlementIDs: testCase.entitlementIds, FullfillmentStatus: testCase.entitlementStatus})
+		if err != nil {
+			t.Error(err)
+		}
+
+		if resp.StatusCode != testCase.statusCode {
+			t.Errorf("expected status code to be \"%d\", go \"%d\"", testCase.statusCode, resp.StatusCode)
+		}
+
+		// Test error cases
+		if resp.StatusCode != http.StatusOK {
+			if resp.ErrorStatus != testCase.statusCode {
+				t.Errorf("expected error status to be \"%d\", got \"%d\"", testCase.statusCode, resp.ErrorStatus)
+			}
+
+			if resp.ErrorMessage != testCase.expectedErrMsg {
+				t.Errorf("expected error message to be \"%s\", got \"%s\"", testCase.expectedErrMsg, resp.ErrorMessage)
+			}
+
+			continue
+		}
+	}
+}

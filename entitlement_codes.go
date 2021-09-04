@@ -4,6 +4,7 @@ type EntitlementCodeStatus string
 
 const (
 	SUCCESSFULLY_REDEEMED EntitlementCodeStatus = "SUCCESSFULLY_REDEEMED"
+	SUCCESS                                     = "SUCCESS"
 	ALREADY_CLAIMED                             = "ALREADY_CLAIMED"
 	EXPIRED                                     = "EXPIRED"
 	USER_NOT_ELIGIBLE                           = "USER_NOT_ELIGIBLE"
@@ -12,6 +13,11 @@ const (
 	UNUSED                                      = "UNUSED"
 	INCORRECT_FORMAT                            = "INCORRECT_FORMAT"
 	INTERNAL_ERROR                              = "INTERNAL_ERROR"
+	INVALID_ID                                  = "INVALID_ID"
+	UNAUTHORIZED                                = "UNAUTHORIZED"
+	UPDATE_FAILED                               = "UPDATE_FAILED"
+	CLAIMED                                     = "CLAIMED"
+	FULFILLED                                   = "FULFILLED"
 )
 
 type CodesParams struct {

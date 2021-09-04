@@ -49,3 +49,43 @@ func (c *Client) GetDropsEntitlements(params *GetDropEntitlementsParams) (*GetDr
 
 	return entitlements, nil
 }
+
+type UpdateDropEntitlementsParams struct {
+	EntitlementIDs     []string              `query:"entitlement_ids"`    // Limit 100
+	FullfillmentStatus EntitlementCodeStatus `query:"fulfillment_status"` // CLAIMED or FULLFILLED
+}
+
+type EntitlementStatus struct {
+	Status EntitlementCodeStatus `json:"status"` // SUCCESS, INVALID_ID, NOT_FOUND, UNAUTHORIZED, UPDATE_FAILED
+	IDs    []string              `json:"ids"`
+}
+
+type ManyEntitlementStatuses struct {
+	EntitlementStatuses []EntitlementStatus `json:"data"`
+}
+
+type UpdateDropsEntitlementsResponse struct {
+	ResponseCommon
+	Data ManyEntitlementStatuses
+}
+
+// UpdateDropsEntitlements updates the fulfillment status on a set of Drops entitlements, specified by their entitlement IDs.
+//
+// Requires User OAuth Token or App Access Token
+//
+// The client ID associated with the access token must have ownership of the game: Client ID > Organization ID > Game ID
+//
+// App Access OAuth Token returns all entitlements with benefits owned by your organization.
+// User OAuth Token returns all entitlements owned by that user with benefits owned by your organization.
+func (c *Client) UpdateDropsEntitlements(params *UpdateDropEntitlementsParams) (*UpdateDropsEntitlementsResponse, error) {
+	resp, err := c.patchAsJSON("/entitlements/drops", &ManyEntitlementStatuses{}, params)
+	if err != nil {
+		return nil, err
+	}
+
+	entitlements := &UpdateDropsEntitlementsResponse{}
+	resp.HydrateResponseCommon(&entitlements.ResponseCommon)
+	entitlements.Data.EntitlementStatuses = resp.Data.(*ManyEntitlementStatuses).EntitlementStatuses
+
+	return entitlements, nil
+}
