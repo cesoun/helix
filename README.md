@@ -55,7 +55,7 @@ If you are looking for the Twitch API docs, see the [Twitch Developer website](h
 - [x] Create Entitlement Grants Upload URL
 - [x] Get Code Status
 - [x] Get Drops Entitlements
-- [ ] Update Drops Entitlements
+- [x] Update Drops Entitlements
 - [x] Redeem Code
 - [x] Create / Remove / List EventSub Subscriptions
 - [x] Get Top Games
